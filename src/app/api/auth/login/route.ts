@@ -4,6 +4,9 @@ import { connectDB } from '@/lib/db';
 import { User } from '@/models/User';
 import { comparePassword, setAuthCookie, signAuthToken } from '@/lib/auth';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
