@@ -5,6 +5,9 @@ import { connectDB } from '@/lib/db';
 import { User } from '@/models/User';
 import { sendEmail } from '@/lib/mailer';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const forgotSchema = z.object({
   email: z.string().email(),
 });
