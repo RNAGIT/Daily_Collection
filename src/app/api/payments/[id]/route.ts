@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { connectDB } from '@/lib/db';
 import { Payment } from '@/models/Payment';
+import { Loan } from '@/models/Loan';
+import { Customer } from '@/models/Customer';
 import { getCurrentUser } from '@/lib/current-user';
 import { recalculateLoanPaymentState } from '@/lib/payment-utils';
+import { buildPaymentReceipt } from '@/lib/payment-receipt';
 
 const paymentUpdateSchema = z.object({
   amountPaid: z.number().positive().optional(),
@@ -17,6 +20,44 @@ async function requireAuth() {
     return null;
   }
   return user;
+}
+
+export async function GET(_: Request, { params }: { params: { id: string } }) {
+  const user = await requireAuth();
+  if (!user) {
+    return NextResponse.json({ message: 'Unauthenticated' }, { status: 401 });
+  }
+
+  await connectDB();
+
+  const payment = await Payment.findById(params.id);
+  if (!payment) {
+    return NextResponse.json({ message: 'Payment not found' }, { status: 404 });
+  }
+
+  const loan = await Loan.findById(payment.loan);
+  if (!loan) {
+    return NextResponse.json({ message: 'Loan not found' }, { status: 404 });
+  }
+
+  const customer = await Customer.findById(payment.customer);
+  if (!customer) {
+    return NextResponse.json({ message: 'Customer not found' }, { status: 404 });
+  }
+
+  const paymentDay = await Payment.countDocuments({
+    loan: loan.id,
+    paidAt: { $lte: payment.paidAt },
+  });
+
+  const receipt = buildPaymentReceipt({
+    loan,
+    payment,
+    customer,
+    dayNumber: Math.max(paymentDay, 1),
+  });
+
+  return NextResponse.json({ receipt });
 }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
@@ -93,5 +134,12 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   await recalculateLoanPaymentState(loanId);
 
   return NextResponse.json({ message: 'Payment deleted' });
+}
+
+export async function POST(request: Request, { params }: { params: { id: string } }) {
+  return NextResponse.json(
+    { message: 'Unsupported operation. Use /api/payments/:id/notify instead.' },
+    { status: 405 },
+  );
 }
 

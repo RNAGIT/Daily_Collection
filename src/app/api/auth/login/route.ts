@@ -26,7 +26,10 @@ export async function POST(request: Request) {
     }
 
     if (user.role !== 'admin' && user.role !== 'superadmin') {
-      return NextResponse.json({ message: 'Only administrator accounts can access this portal.' }, { status: 403 });
+      return NextResponse.json(
+        { message: 'Only administrator accounts can access this portal.' },
+        { status: 403 },
+      );
     }
 
     const isValid = await comparePassword(data.password, user.password);
@@ -40,12 +43,10 @@ export async function POST(request: Request) {
     const token = signAuthToken(user);
     setAuthCookie(token);
 
-    const userId = user.id;
-
     return NextResponse.json({
       message: 'Login successful',
       user: {
-        id: userId,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 });
     }
+    console.error('[api/auth/login]', error);
     return NextResponse.json({ message: 'Login failed' }, { status: 500 });
   }
 }

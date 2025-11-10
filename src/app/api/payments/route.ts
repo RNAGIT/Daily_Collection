@@ -5,8 +5,8 @@ import { Loan } from '@/models/Loan';
 import { Payment } from '@/models/Payment';
 import { Customer } from '@/models/Customer';
 import { getCurrentUser } from '@/lib/current-user';
-import { sendEmail } from '@/lib/mailer';
 import { recalculateLoanPaymentState } from '@/lib/payment-utils';
+import { buildPaymentReceipt } from '@/lib/payment-receipt';
 
 const paymentSchema = z.object({
   loanId: z.string().min(1),
@@ -14,39 +14,6 @@ const paymentSchema = z.object({
   paidAt: z.string().optional(),
   note: z.string().optional(),
 });
-
-function normalizeCustomer(customer: unknown) {
-  let id = '';
-  let name: string | undefined;
-  let email: string | undefined;
-
-  if (typeof customer === 'string') {
-    id = customer;
-  } else if (customer && typeof customer === 'object') {
-    const candidate = customer as {
-      id?: unknown;
-      _id?: { toString: () => string };
-      name?: unknown;
-      email?: unknown;
-    };
-
-    if (typeof candidate.id === 'string') {
-      id = candidate.id;
-    } else if (typeof candidate._id?.toString === 'function') {
-      id = candidate._id.toString();
-    }
-
-    if (typeof candidate.name === 'string') {
-      name = candidate.name;
-    }
-
-    if (typeof candidate.email === 'string') {
-      email = candidate.email;
-    }
-  }
-
-  return { id, name, email };
-}
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -90,14 +57,13 @@ export async function POST(request: Request) {
 
     await connectDB();
 
-    const loan = await Loan.findById(data.loanId).populate('customer');
+    const loan = await Loan.findById(data.loanId);
     if (!loan) {
       return NextResponse.json({ message: 'Loan not found' }, { status: 404 });
     }
 
-    const customer = normalizeCustomer(loan.customer);
-
-    if (!customer.id) {
+    const customer = await Customer.findById(loan.customer);
+    if (!customer) {
       return NextResponse.json({ message: 'Customer record is missing for this loan' }, { status: 400 });
     }
 
@@ -117,29 +83,19 @@ export async function POST(request: Request) {
 
     await recalculateLoanPaymentState(loan.id);
 
-    const updatedPayment = await Payment.findById(payment.id);
-    const latestLoan = await Loan.findById(loan.id);
+    const refreshedPayment = await Payment.findById(payment.id);
+    const referencePayment = refreshedPayment ?? payment;
+    const paymentDay = await Payment.countDocuments({
+      loan: loan.id,
+      paidAt: { $lte: referencePayment.paidAt },
+    });
 
-    if (customer.email && updatedPayment) {
-      const newPending = updatedPayment.newPending ?? 0;
-      const totalPaid = (latestLoan?.totalAmount ?? loan.totalAmount) - newPending;
-      await sendEmail({
-        to: customer.email,
-        subject: `Payment receipt for loan #${loan.loanNumber}`,
-        html: `
-          <p>Hi ${customer.name ?? 'valued customer'},</p>
-          <p>We received a payment of <strong>${data.amountPaid.toFixed(2)}</strong> on ${paidAt.toLocaleString()}.</p>
-          <p>Loan summary:</p>
-          <ul>
-            <li>Principal: ${loan.principal.toFixed(2)}</li>
-            <li>Total amount with interest: ${(latestLoan?.totalAmount ?? loan.totalAmount).toFixed(2)}</li>
-            <li>Total paid so far: ${totalPaid.toFixed(2)}</li>
-            <li>New pending amount: ${Math.max(newPending, 0).toFixed(2)}</li>
-          </ul>
-          <p>Thank you!</p>
-        `,
-      });
-    }
+    const receipt = buildPaymentReceipt({
+      loan,
+      payment: referencePayment,
+      customer,
+      dayNumber: Math.max(paymentDay, 1),
+    });
 
     return NextResponse.json(
       {
@@ -147,6 +103,7 @@ export async function POST(request: Request) {
         payment: {
           id: payment.id,
         },
+        summary: receipt,
       },
       { status: 201 },
     );

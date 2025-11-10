@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-client';
+import { formatCustomerCode } from '@/lib/formatters';
 
 interface CustomerDetail {
   id: string;
@@ -269,7 +270,7 @@ export default function EditCustomerPage() {
           )}
         </CardContent>
         <CardFooter className="text-xs text-slate-500">
-          Customer #{form.customerNumber ? String(form.customerNumber).padStart(3, '0') : '—'}
+          Customer {form.customerNumber ? formatCustomerCode(form.customerNumber) : '—'}
         </CardFooter>
       </Card>
       <ConfirmDialog

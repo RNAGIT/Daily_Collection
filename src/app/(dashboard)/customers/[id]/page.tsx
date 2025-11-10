@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import NoticeBanner from '@/components/ui/notice-banner';
+import { formatCustomerCode, formatLoanCode } from '@/lib/formatters';
 
 function statusVariant(status: string) {
   switch (status) {
@@ -51,7 +52,7 @@ export default async function CustomerDetailPage({
         <div>
           <h1 className="text-2xl font-semibold text-white">{customer.name}</h1>
           <p className="text-sm text-slate-400">
-            Customer #{String(customer.customerNumber).padStart(3, '0')} • Created{' '}
+            Customer {formatCustomerCode(customer.customerNumber)} • Created{' '}
             {new Date(customer.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -125,7 +126,7 @@ export default async function CustomerDetailPage({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-white">Loan #{String(loan.loanNumber).padStart(3, '0')}</p>
+                      <p className="font-semibold text-white">Loan {formatLoanCode(loan.loanNumber)}</p>
                       <p className="text-xs text-slate-400">
                         {new Date(loan.startDate).toLocaleDateString()} →{' '}
                         {new Date(loan.endDate).toLocaleDateString()}

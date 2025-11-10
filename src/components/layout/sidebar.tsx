@@ -9,6 +9,7 @@ import {
   UsersIcon,
   CreditCardIcon,
   CurrencyDollarIcon,
+  DocumentMagnifyingGlassIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   XMarkIcon,
@@ -26,6 +27,7 @@ const links = [
   { href: '/customers', label: 'Customers', icon: UsersIcon },
   { href: '/loans', label: 'Loans', icon: CreditCardIcon },
   { href: '/payments', label: 'Payments', icon: CurrencyDollarIcon },
+  { href: '/records', label: 'Records', icon: DocumentMagnifyingGlassIcon },
   { href: '/settings', label: 'Settings', icon: Cog6ToothIcon },
 ];
 

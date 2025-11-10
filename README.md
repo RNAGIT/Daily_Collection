@@ -7,8 +7,9 @@ Modern loan and collections management portal for Arunalu Investments. The app c
 - **Role-gated access** for super admins and admins with JWT session cookies.
 - **Customer registry** with sequential IDs and granular locality metadata.
 - **Loan orchestration** supporting automated schedules, interest computation, and status auditing.
-- **Payment operations** with validation, arrears roll-ups, and optional receipt email dispatch.
+- **Payment operations** with validation, arrears roll-ups, and optional receipt email/SMS dispatch.
 - **Dashboard insights** summarising capital, profit, user/loan states, and arrears at a glance.
+- **Email OTP security** enforced during administrator login and password recovery flows.
 - **Bluetooth device pairing** via the Web Bluetooth API for portable receipt printers.
 
 ## Tech Stack
@@ -60,13 +61,21 @@ JWT_EXPIRES_IN="7d" # accepts values understood by jsonwebtoken (e.g. 1d, 12h, 6
 # App URLs (used in emails)
 APP_URL="https://arunalu.example.com" # change to your deployed origin
 
-# SMTP (Nodemailer)
+# Email / OTP delivery (SMTP or provider API)
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="465"
 SMTP_USER="no-reply@arunalu.lk"
-SMTP_PASSWORD="app-password"
+SMTP_PASSWORD="app-password" # use an app password for Gmail
 MAIL_FROM_ADDRESS="no-reply@arunalu.lk"
 MAIL_FROM_NAME="Arunalu Investments"
+
+# Optional: API key for third-party email provider (if you swap SMTP out)
+MAIL_PROVIDER_API_KEY="replace-with-provider-api-key"
+
+# Notify.lk SMS (optional but required for SMS alerts)
+NOTIFYLK_USER_ID=""
+NOTIFYLK_API_KEY=""
+NOTIFYLK_SENDER_ID=""
 ```
 
 > **Note:** The `.env.local` file is git-ignored. Do not commit secrets. Use an app password if you rely on Gmail SMTP.
@@ -126,10 +135,21 @@ When the database is empty, the first registered account automatically becomes a
 
 Entries with existing emails are skipped safely. Remove the `SEED_ADMINS` variable afterwards to avoid accidental reseeding.
 
+## SMS Notifications (Notify.lk)
+
+To enable SMS receipts:
+
+1. Create an account at [notify.lk](https://notify.lk/) and activate your sender ID.
+2. Generate an API key and note your `user_id`, `api_key`, and approved `sender_id`.
+3. Add the values to `.env.local` (`NOTIFYLK_USER_ID`, `NOTIFYLK_API_KEY`, `NOTIFYLK_SENDER_ID`).
+4. Restart the dev server or redeploy so the environment variables are loaded.
+
+When a payment is recorded you can trigger SMS receipts from the Payments screen.
+
 ## Operational Notes
 
 - **JWT Cookies:** `AUTH_COOKIE` is httpOnly and same-site `lax`; update `JWT_SECRET` in production and rotate regularly.
-- **Email Receipts:** If SMTP is not configured, emails fall back to logging the payload — useful in development.
+- **Receipts:** Email and SMS notices are triggered manually from the Payments screen. If SMTP is not configured, emails fall back to logging the payload — useful during development.
 - **Bluetooth Pairing:** Browsers require secure contexts (HTTPS) and user gesture to initiate device discovery.
 - **MongoDB Connections:** The connection helper caches the Mongoose instance to avoid handler cold-start churn.
 

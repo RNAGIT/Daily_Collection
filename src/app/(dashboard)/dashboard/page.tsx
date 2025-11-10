@@ -1,6 +1,14 @@
 import { getDashboardOverviewData } from '@/lib/dashboard';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { UsersIcon, CurrencyDollarIcon, BanknotesIcon, ChartBarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import {
+  UsersIcon,
+  CurrencyDollarIcon,
+  BanknotesIcon,
+  ChartBarIcon,
+  ShieldCheckIcon,
+  ArrowTrendingUpIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline';
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-LK', {
@@ -19,6 +27,8 @@ export default async function DashboardPage() {
   const warningLoans = overview.loans.breakdown.warning ?? 0;
 
   const activeCustomers = overview.customers.breakdown.active ?? 0;
+  const totalClaimed = overview.summary.totalPaid;
+  const pendingTotal = overview.summary.outstanding;
 
   const completionRate = totalLoans ? Math.round((completedLoans / totalLoans) * 100) : 0;
   const warningRate = totalLoans ? Math.round((warningLoans / totalLoans) * 100) : 0;
@@ -106,6 +116,30 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="section-heading">Collections focus</h2>
+        <p className="mt-1 text-sm text-white/60">
+          Core recovery totals to anchor your daily follow-up plan.
+        </p>
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+          <StatCard
+            label="Total Claimed"
+            value={formatCurrency(totalClaimed)}
+            helper={`From ${formatCurrency(overview.summary.totalCapitalWithInterest)} deployed`}
+            icon={<ArrowTrendingUpIcon className="h-6 w-6" />}
+            color="emerald"
+          />
+          <StatCard
+            label="Pending Total"
+            value={formatCurrency(pendingTotal)}
+            helper="Still due from customers"
+            icon={<ExclamationTriangleIcon className="h-6 w-6" />}
+            color="rose"
+          />
         </div>
       </section>
 

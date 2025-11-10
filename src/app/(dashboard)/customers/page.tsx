@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-client';
+import { formatCustomerCode } from '@/lib/formatters';
 
 interface Customer {
   id: string;
@@ -164,7 +165,9 @@ export default function CustomersPage() {
                     <tr key={customer.id} className="hover:bg-slate-800/40">
                       <td className="px-3 py-3">
                         <div className="font-semibold text-white">{customer.name}</div>
-                        <div className="text-xs text-slate-400">#00{customer.customerNumber}</div>
+                        <div className="text-xs text-slate-400">
+                          {formatCustomerCode(customer.customerNumber)}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <div>{customer.phone || '—'}</div>

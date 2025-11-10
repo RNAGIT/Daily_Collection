@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-client';
+import { formatCustomerCode, formatLoanCode } from '@/lib/formatters';
 import { calculateLoan } from '@/lib/calculations';
 
 interface CustomerOption {
@@ -181,7 +182,7 @@ export default function EditLoanPage() {
                     <option value="">Select customer</option>
                     {customers?.map((customer) => (
                       <option key={customer.id} value={customer.id}>
-                        #{String(customer.customerNumber).padStart(3, '0')} – {customer.name}
+                        {formatCustomerCode(customer.customerNumber)} – {customer.name}
                       </option>
                     ))}
                   </select>

@@ -8,8 +8,21 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiFetch } from '@/lib/api-client';
 
+type ForgotResponse =
+  | {
+      message: string;
+      requiresOtp: true;
+    }
+  | {
+      message: string;
+    };
+
 export default function ForgotPasswordPage() {
+  const [phase, setPhase] = useState<'email' | 'otp' | 'completed'>('email');
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,11 +34,23 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await apiFetch<{ message: string }>('/api/auth/forgot-password', {
+      const payload =
+        phase === 'email'
+          ? { email }
+          : { email, otp, password, confirmPassword };
+
+      const response = await apiFetch<ForgotResponse>('/api/auth/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(payload),
       });
+
       setStatus(response.message);
+
+      if ('requiresOtp' in response && response.requiresOtp) {
+        setPhase('otp');
+      } else {
+        setPhase('completed');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to process request');
     } finally {
@@ -63,19 +88,76 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  disabled={phase !== 'email'}
                 />
               </div>
+              {phase === 'otp' ? (
+                <>
+                  <div className="space-y-2 text-left">
+                    <Label htmlFor="otp">One-time password</Label>
+                    <Input
+                      id="otp"
+                      name="otp"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Enter 6 digit code"
+                      value={otp}
+                      onChange={(event) => setOtp(event.target.value)}
+                      required
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label htmlFor="password">New password</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2 text-left">
+                    <Label htmlFor="confirmPassword">Confirm password</Label>
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      required
+                    />
+                  </div>
+                </>
+              ) : null}
               {status ? <p className="text-sm text-emerald-400">{status}</p> : null}
               {error ? <p className="text-sm text-rose-400">{error}</p> : null}
               <Button
                 className="w-full bg-gradient-to-r from-violet-500 via-sky-500 to-cyan-400 text-white shadow-lg shadow-sky-500/30 hover:from-violet-400 hover:via-sky-400 hover:to-cyan-300"
-                disabled={isSubmitting}
+                disabled={isSubmitting || phase === 'completed'}
               >
-                {isSubmitting ? 'Sending...' : 'Reset and create secure password'}
+                {phase === 'completed'
+                  ? 'Password updated'
+                  : isSubmitting
+                  ? phase === 'email'
+                    ? 'Sending code...'
+                    : 'Resetting...'
+                  : phase === 'email'
+                  ? 'Send OTP'
+                  : 'Set new password'}
               </Button>
             </form>
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="text-left text-slate-300">You will receive a secure OTP via email.</span>
+              <span className="text-left text-slate-300">
+                {phase === 'email'
+                  ? 'You will receive a secure OTP via email.'
+                  : phase === 'otp'
+                  ? 'Enter the email OTP then choose your new password.'
+                  : 'You can now sign in with your new password.'}
+              </span>
               <Link href="/login" className="font-medium text-sky-300 hover:text-sky-200">
                 Back to login
               </Link>

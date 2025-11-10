@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-client';
+import { formatLoanCode } from '@/lib/formatters';
 
 interface Loan {
   id: string;
@@ -154,7 +155,7 @@ export default function LoansPage() {
                 {data.map((loan) => (
                   <tr key={loan.id} className="hover:bg-slate-800/40">
                     <td className="px-3 py-3">
-                      <div className="font-semibold text-white">#{String(loan.loanNumber).padStart(3, '0')}</div>
+                      <div className="font-semibold text-white">{formatLoanCode(loan.loanNumber)}</div>
                       <div className="text-xs text-slate-400">
                         {new Date(loan.startDate).toLocaleDateString()} →{' '}
                         {new Date(loan.endDate).toLocaleDateString()}

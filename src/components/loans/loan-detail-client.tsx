@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-client';
+import { formatLoanCode } from '@/lib/formatters';
 
 export interface ScheduleEntry {
   day: number;
@@ -285,7 +286,7 @@ export function LoanDetailClient({ loan, initialNotice }: LoanDetailClientProps)
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-slate-400">
-              Loan #{String(loan.loanNumber).padStart(3, '0')} • {new Date(loan.startDate).toLocaleDateString()} →{' '}
+              Loan {formatLoanCode(loan.loanNumber)} • {new Date(loan.startDate).toLocaleDateString()} →{' '}
               {new Date(loan.endDate).toLocaleDateString()}
             </p>
             <h1 className="mt-1 text-2xl font-semibold text-white">{loan.customerName}</h1>

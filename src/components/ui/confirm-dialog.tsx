@@ -15,6 +15,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
   children?: React.ReactNode;
   contentClassName?: string;
+  footer?: React.ReactNode;
 }
 
 export function ConfirmDialog({
@@ -29,6 +30,7 @@ export function ConfirmDialog({
   onCancel,
   children,
   contentClassName,
+  footer,
 }: ConfirmDialogProps) {
   if (!open) {
     return null;
@@ -59,29 +61,33 @@ export function ConfirmDialog({
             {children}
           </div>
         ) : null}
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            className="flex-1 justify-center sm:flex-none sm:px-6"
-            onClick={onCancel}
-            disabled={loading}
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            type="button"
-            className={cn(
-              'flex-1 justify-center sm:flex-none sm:px-6',
-              tone === 'danger' ? 'bg-rose-500 text-white hover:bg-rose-400' : '',
-            )}
-            variant={tone === 'danger' ? 'destructive' : 'primary'}
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : confirmLabel}
-          </Button>
-        </div>
+        {footer ? (
+          <div className="relative">{footer}</div>
+        ) : (
+          <div className="relative flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex-1 justify-center sm:flex-none sm:px-6"
+              onClick={onCancel}
+              disabled={loading}
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              type="button"
+              className={cn(
+                'flex-1 justify-center sm:flex-none sm:px-6',
+                tone === 'danger' ? 'bg-rose-500 text-white hover:bg-rose-400' : '',
+              )}
+              variant={tone === 'danger' ? 'destructive' : 'primary'}
+              onClick={onConfirm}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : confirmLabel}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
